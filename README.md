@@ -112,8 +112,12 @@ docker build -f image/Dockerfile -t registry.example/trino_fdw:17 .
 ```
 
 The base image is pinned by digest and the Multicorn tarball is verified by
-SHA-256. Pass `--build-arg WITH_KERBEROS=1` to include the Kerberos client
-libraries. Tagged releases (`v*`) build a multi-arch image, scan it with Trivy,
+SHA-256. Debian security updates are applied at build time, build tooling and
+pip are removed, and the default `release` target flattens the result into a
+single layer so nothing deleted during the build survives in a lower layer.
+The image scans clean with Trivy at HIGH and CRITICAL. The `dev` target keeps
+the base image's entrypoint and is what the Docker Compose stack uses. Pass
+`--build-arg WITH_KERBEROS=1` to include the Kerberos client libraries. Tagged releases (`v*`) build a multi-arch image, scan it with Trivy,
 attach an SBOM and provenance, and publish it as
 `ghcr.io/<owner>/trino_fdw:17-v<version>` and `ghcr.io/<owner>/trino_fdw:17`.
 Example CloudNativePG manifests are in [deploy/](deploy/); real cluster

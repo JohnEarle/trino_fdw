@@ -24,6 +24,7 @@ services:
     build:
       context: ..
       dockerfile: image/Dockerfile
+      target: dev
       args:
         BASE: postgres:17-bookworm
         RUN_USER: postgres
