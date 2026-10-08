@@ -10,10 +10,26 @@ readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.9"
 dependencies = ["trino>=0.330"]
+keywords = ["postgresql", "fdw", "foreign-data-wrapper", "trino", "multicorn"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Database",
+    "Topic :: Database :: Front-Ends",
+]
+
+[project.urls]
+Homepage = "https://github.com/JohnEarle/trino_fdw"
+Source = "https://github.com/JohnEarle/trino_fdw"
+Issues = "https://github.com/JohnEarle/trino_fdw/issues"
 
 [project.optional-dependencies]
 kerberos = ["trino[kerberos]"]
-test = ["pytest>=8"]
+test = ["pytest>=8", "build", "twine"]
 
 [tool.setuptools.packages.find]
 include = ["trino_fdw*"]

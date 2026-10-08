@@ -127,6 +127,14 @@ make test          # unit tests, no PostgreSQL needed
 make integration   # docker compose: Trino (TLS, password/cert/JWT auth) and PostgreSQL
 ```
 
+## Releasing
+
+Releases are published to PyPI from GitHub Actions. Bump `version` in
+`pyproject.toml`, tag the commit `v<version>` and push the tag. The workflow
+builds the sdist and wheel, checks them, publishes to PyPI through trusted
+publishing (no API token is stored), and attaches the files to a GitHub
+Release.
+
 ## License
 
 Apache 2.0.
