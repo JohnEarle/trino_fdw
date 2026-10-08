@@ -1,5 +1,5 @@
 # Local integration stack: Trino (password auth over TLS, impersonation rules)
-# and a PostgreSQL built from image/Dockerfile. Run dev/integration.sh.
+# and a PostgreSQL built from dev/Dockerfile. Run dev/integration.sh.
 services:
   trino:
     image: trinodb/trino:483
@@ -23,7 +23,7 @@ services:
   postgres:
     build:
       context: ..
-      dockerfile: image/Dockerfile
+      dockerfile: dev/Dockerfile
     environment:
       POSTGRES_PASSWORD: postgres
     ports: ["55432:5432"]

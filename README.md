@@ -112,27 +112,19 @@ psql -c "CREATE EXTENSION multicorn"
 Then create the server as in the quick start. For Kerberos, install the
 `trino_fdw[kerberos]` extra.
 
-### Container image
+### PostgreSQL in a container
 
-[image/Dockerfile](image/Dockerfile) builds a PostgreSQL image with Multicorn2
-and trino_fdw preinstalled, for environments where PostgreSQL runs in
-containers. It is based on the official `postgres` image, pinned by digest;
-pass `--build-arg BASE=...` and `--build-arg RUN_USER=...` to build on another
-Debian-based PostgreSQL image instead. The Multicorn tarball is verified by
-SHA-256, Debian security updates are applied at build time, and build tooling
-is removed. Tagged releases (`v*`) build a multi-arch image, scan it with
-Trivy, attach an SBOM and provenance, and publish it as
-`ghcr.io/<owner>/trino_fdw:17-v<version>`.
-
-```bash
-docker build -f image/Dockerfile -t trino_fdw:17 .
-```
+Install the package into your own PostgreSQL image the same way: a Debian
+PostgreSQL base, the Multicorn2 extension built against its server headers,
+and `pip install trino_fdw` into the interpreter Multicorn embeds.
+[dev/Dockerfile](dev/Dockerfile) shows the steps; it is the fixture the
+integration tests run against, not a published image.
 
 ## Development
 
 ```bash
 make test          # unit tests, no PostgreSQL needed
-make integration   # docker compose: Trino (TLS + password auth) and PostgreSQL
+make integration   # docker compose: Trino (TLS, password/cert/JWT auth) and PostgreSQL
 ```
 
 ## License

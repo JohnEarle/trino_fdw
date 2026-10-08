@@ -1,4 +1,4 @@
-.PHONY: venv test integration image clean
+.PHONY: venv test integration clean
 
 venv:
 	python3 -m venv .venv && .venv/bin/pip install -q -e ".[test]"
@@ -8,9 +8,6 @@ test:
 
 integration:
 	dev/integration.sh
-
-image:
-	docker build -f image/Dockerfile -t trino_fdw:17 .
 
 clean:
 	cd dev && docker compose down -v --remove-orphans; rm -rf dev/.generated
