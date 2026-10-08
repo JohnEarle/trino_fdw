@@ -1,0 +1,17 @@
+{
+  "impersonation": [
+    { "original_user": "svc_fdw", "new_user": "reader|analyst", "allow": true }
+  ],
+  "catalogs": [
+    { "user": "admin", "catalog": ".*", "allow": "all" },
+    { "user": "svc_fdw|reader|analyst", "catalog": "memory|system", "allow": "read-only" }
+  ],
+  "schemas": [
+    { "user": "admin", "schema": ".*", "owner": true }
+  ],
+  "tables": [
+    { "user": "admin", "privileges": ["SELECT", "INSERT", "DELETE", "UPDATE", "OWNERSHIP"] },
+    { "user": "svc_fdw|reader|analyst", "catalog": "memory", "schema": "demo", "privileges": ["SELECT"] },
+    { "user": "svc_fdw|reader|analyst", "catalog": "system", "privileges": ["SELECT"] }
+  ]
+}

@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: trino-bridge-egress
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: trino-bridge
+  policyTypes: [Egress]
+  egress:
+    - to:                         # Trino coordinator
+        - namespaceSelector:
+            matchLabels: { kubernetes.io/metadata.name: trino }
+      ports: [{ port: 8443, protocol: TCP }]
+    - to:                         # DNS
+        - namespaceSelector: {}
+      ports: [{ port: 53, protocol: UDP }, { port: 53, protocol: TCP }]
+    - to:                         # Kubernetes API (CNPG instance manager)
+        - ipBlock: { cidr: 0.0.0.0/0 }
+      ports: [{ port: 6443, protocol: TCP }, { port: 443, protocol: TCP }]
+    - to:                         # replication between instances
+        - podSelector:
+            matchLabels: { cnpg.io/cluster: trino-bridge }

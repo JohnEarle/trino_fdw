@@ -1,0 +1,43 @@
+# Local integration stack: Trino (password auth over TLS, impersonation rules)
+# and a PostgreSQL built from image/Dockerfile. Run dev/integration.sh.
+services:
+  trino:
+    image: trinodb/trino:483
+    ports: ["8443:8443"]
+    volumes:
+      - ./trino/config.properties:/etc/trino/config.properties:ro
+      - ./trino/password-authenticator.properties:/etc/trino/password-authenticator.properties:ro
+      - ./trino/access-control.properties:/etc/trino/access-control.properties:ro
+      - ./trino/rules.json:/etc/trino/rules.json:ro
+      - ./trino/catalog/memory.properties:/etc/trino/catalog/memory.properties:ro
+      - ./.generated/password.db:/etc/trino/password.db:ro
+      - ./.generated/tls:/etc/trino/tls:ro
+      - ./.generated/jwt/public.pem:/etc/trino/jwt/public.pem:ro
+      - ./seed.sql:/seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsk https://localhost:8443/v1/info | grep -q '\"starting\":false'"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+
+  postgres:
+    build:
+      context: ..
+      dockerfile: image/Dockerfile
+      args:
+        BASE: postgres:17-bookworm
+        RUN_USER: postgres
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports: ["55432:5432"]
+    volumes:
+      - ./.generated/pg/password:/etc/trino-fdw/password:ro
+      - ./.generated/pg/token:/etc/trino-fdw/token:ro
+      - ./.generated/tls/client.crt:/etc/trino-fdw/client.crt:ro
+      - ./.generated/tls/client.key:/etc/trino-fdw/client.key:ro
+      - ./.generated/tls/ca.pem:/etc/trino-fdw/ca.pem:ro
+      - ../sql:/sql:ro
+      - ./pg:/pg:ro
+    depends_on:
+      trino:
+        condition: service_healthy

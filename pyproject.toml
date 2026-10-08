@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "trino_fdw"
+version = "0.1.0"
+description = "PostgreSQL foreign data wrapper for Trino, built on Multicorn2"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+dependencies = ["trino>=0.330"]
+
+[project.optional-dependencies]
+kerberos = ["trino[kerberos]"]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+include = ["trino_fdw*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
