@@ -21,6 +21,8 @@ if [ ! -f "$out/tls/client.key" ]; then
     -keyout "$out/tls/client.key" -out "$out/tls/client.csr" >/dev/null 2>&1
   openssl x509 -req -in "$out/tls/client.csr" -CA "$out/tls/ca.pem" -CAkey "$out/tls/ca.key" \
     -CAcreateserial -days 365 -out "$out/tls/client.crt" >/dev/null 2>&1
+  # dev only: the bind mount must be readable by the container's postgres uid
+  chmod 0444 "$out/tls/client.key"
 fi
 
 # RS256 JWT for auth 'jwt': Trino verifies with the public key, principal = sub
