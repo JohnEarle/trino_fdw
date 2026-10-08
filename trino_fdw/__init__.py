@@ -8,8 +8,8 @@ Usage from SQL::
         host 'trino.example.internal', port '8443',
         catalog 'hive', schema 'prod',
         auth 'password', user 'svc_fdw',
-        password_file '/projected/trino/password',
-        ca_file '/projected/trino/ca.pem'
+        password_file '/etc/trino_fdw/password',
+        ca_file '/etc/trino_fdw/ca.pem'
     );
 
 Secrets are never accepted as SQL options; see :mod:`trino_fdw.options`.

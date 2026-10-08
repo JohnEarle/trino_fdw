@@ -24,10 +24,6 @@ services:
     build:
       context: ..
       dockerfile: image/Dockerfile
-      target: dev
-      args:
-        BASE: postgres:17-bookworm
-        RUN_USER: postgres
     environment:
       POSTGRES_PASSWORD: postgres
     ports: ["55432:5432"]

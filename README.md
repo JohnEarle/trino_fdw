@@ -13,9 +13,9 @@ collectors, legacy reporting), and joining Trino data with local tables.
 * **No secret is ever accepted as a SQL option.** `password`, `token`, `key`
   and friends are refused both by the wrapper at runtime and by an event
   trigger at DDL time ([sql/20_guard.sql](sql/20_guard.sql)). Credentials are
-  read from files on the database host, which on CloudNativePG are projected
-  Kubernetes Secrets. Nothing sensitive reaches the catalog, backups, dumps
-  or `log_statement` output.
+  read from files on the database host, mounted from whatever secret store
+  you use. Nothing sensitive reaches the catalog, backups, dumps or
+  `log_statement` output.
 * **TLS is mandatory.** Plain HTTP and `verify=false` are rejected. Supply
   the issuing CA with `ca_file`.
 * **All Trino authentication methods** are supported: password (LDAP or file),
@@ -36,8 +36,8 @@ CREATE SERVER trino FOREIGN DATA WRAPPER multicorn OPTIONS (
     host 'trino.example.internal', port '8443',
     catalog 'hive', schema 'prod',
     auth 'password', user 'svc_fdw',
-    password_file '/projected/trino/password',
-    ca_file '/projected/trino/ca.pem'
+    password_file '/etc/trino_fdw/password',
+    ca_file '/etc/trino_fdw/ca.pem'
 );
 CREATE USER MAPPING FOR reader SERVER trino OPTIONS (trino_user 'reader');
 GRANT USAGE ON FOREIGN SERVER trino TO reader;
@@ -95,33 +95,38 @@ are pushed when PostgreSQL offers them. Anything else is evaluated by
 PostgreSQL after fetch, which is always correct because PostgreSQL re-checks
 every qual on returned rows. `EXPLAIN VERBOSE` shows the Trino SQL.
 
-## Why this repository ships a Dockerfile
+## Installation
 
-A Multicorn wrapper cannot be installed into a running PostgreSQL the way a
-Python package is installed into an application. Multicorn is a C extension
-compiled against the server headers, and the wrapper and the Trino client
-have to live in the same Python the server embeds. On CloudNativePG that means
-an image. The image is therefore the distribution format of this component,
-the same way `mysql_fdw` ships `.deb` and `.rpm` packages. It contains nothing
-but a pinned PostgreSQL base, Multicorn, the Trino client and this package.
+trino_fdw is a Python package loaded by the Multicorn2 extension, so it must
+be installed into the Python interpreter that your PostgreSQL server embeds.
 
-## Building the image
+Requirements: PostgreSQL 14 to 18, [Multicorn2](https://github.com/pgsql-io/multicorn2)
+3.2, Python 3.9 or newer.
 
 ```bash
-docker build -f image/Dockerfile -t registry.example/trino_fdw:17 .
+# on the database host, as root
+pip install trino_fdw            # or: pip install /path/to/this/repo
+psql -c "CREATE EXTENSION multicorn"
 ```
 
-The base image is pinned by digest and the Multicorn tarball is verified by
-SHA-256. Debian security updates are applied at build time, build tooling and
-pip are removed, and the default `release` target flattens the result into a
-single layer so nothing deleted during the build survives in a lower layer.
-The image scans clean with Trivy at HIGH and CRITICAL. The `dev` target keeps
-the base image's entrypoint and is what the Docker Compose stack uses. Pass
-`--build-arg WITH_KERBEROS=1` to include the Kerberos client libraries. Tagged releases (`v*`) build a multi-arch image, scan it with Trivy,
-attach an SBOM and provenance, and publish it as
-`ghcr.io/<owner>/trino_fdw:17-v<version>` and `ghcr.io/<owner>/trino_fdw:17`.
-Example CloudNativePG manifests are in [deploy/](deploy/); real cluster
-values belong in your own infrastructure repository.
+Then create the server as in the quick start. For Kerberos, install the
+`trino_fdw[kerberos]` extra.
+
+### Container image
+
+[image/Dockerfile](image/Dockerfile) builds a PostgreSQL image with Multicorn2
+and trino_fdw preinstalled, for environments where PostgreSQL runs in
+containers. It is based on the official `postgres` image, pinned by digest;
+pass `--build-arg BASE=...` and `--build-arg RUN_USER=...` to build on another
+Debian-based PostgreSQL image instead. The Multicorn tarball is verified by
+SHA-256, Debian security updates are applied at build time, and build tooling
+is removed. Tagged releases (`v*`) build a multi-arch image, scan it with
+Trivy, attach an SBOM and provenance, and publish it as
+`ghcr.io/<owner>/trino_fdw:17-v<version>`.
+
+```bash
+docker build -f image/Dockerfile -t trino_fdw:17 .
+```
 
 ## Development
 

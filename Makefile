@@ -10,7 +10,7 @@ integration:
 	dev/integration.sh
 
 image:
-	docker build -f image/Dockerfile -t cnpg-trino-fdw:17 .
+	docker build -f image/Dockerfile -t trino_fdw:17 .
 
 clean:
 	cd dev && docker compose down -v --remove-orphans; rm -rf dev/.generated

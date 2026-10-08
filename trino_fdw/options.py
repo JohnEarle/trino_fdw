@@ -9,7 +9,7 @@ objects and enforces the one rule that matters most for security:
 
 Credentials are read from files on the database host (``password_file``,
 ``jwt_file``, ``key_file``, ...).  Those files are expected to be mounted
-from a secret store such as a Kubernetes Secret.  A ``password`` option,
+from a secret store.  A ``password`` option,
 or anything that looks like one, raises an error before any connection is
 attempted, so the secret never reaches the catalog, a backup or a dump.
 The SQL guard in ``sql/20_guard.sql`` enforces the same rule at DDL time.
@@ -260,10 +260,10 @@ def read_secret_file(path: str, strict: bool = False, warn=None) -> str:
 
     * The file must exist and be a regular file.
     * If it is world-readable the wrapper raises (``strict``) or warns.
-    * Group-readable files only warn, because Kubernetes projected volumes
-      with an ``fsGroup`` are 0440 by design.
+    * Group-readable files only warn, because some secret mounts are 0440
+      by design.
     The content is stripped of surrounding whitespace (a trailing newline is
-    the usual artefact of ``kubectl create secret``).
+    the usual artefact of secret tooling).
     """
     try:
         st = os.stat(path)

@@ -1,6 +1,6 @@
 -- Example server definition. Adjust host, catalog, schema and file paths.
 -- No secret appears here: the password is read from password_file on the
--- database host (a projected Kubernetes Secret under CloudNativePG).
+-- database host, mounted from your secret store.
 
 CREATE SERVER trino FOREIGN DATA WRAPPER multicorn OPTIONS (
     wrapper       'trino_fdw.TrinoFDW',
@@ -10,8 +10,8 @@ CREATE SERVER trino FOREIGN DATA WRAPPER multicorn OPTIONS (
     schema        'prod',
     auth          'password',
     user          'svc_fdw',
-    password_file '/projected/trino/password',
-    ca_file       '/projected/trino/ca.pem',
+    password_file '/etc/trino_fdw/password',
+    ca_file       '/etc/trino_fdw/ca.pem',
     strict_file_permissions 'true',
     source        'trino_fdw'
 );

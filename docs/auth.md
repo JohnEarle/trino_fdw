@@ -8,7 +8,7 @@ landing in the catalog.
 ## Password (LDAP or password file on Trino)
 
 ```sql
-OPTIONS (auth 'password', user 'svc_fdw', password_file '/projected/trino/password')
+OPTIONS (auth 'password', user 'svc_fdw', password_file '/etc/trino_fdw/password')
 ```
 
 Trino only accepts password authentication over TLS, and the wrapper only
@@ -27,26 +27,28 @@ Secret, done. The integration test exercises exactly this on a live session.
 ## JWT
 
 ```sql
-OPTIONS (auth 'jwt', jwt_file '/projected/trino/token')
+OPTIONS (auth 'jwt', jwt_file '/etc/trino_fdw/token')
 ```
 
 Any bearer token Trino's JWT authenticator accepts. Two zero-static-secret
 setups:
 
-* **Kubernetes service account token.** Add a projected `serviceAccountToken`
-  source with `audience: trino` to the CNPG cluster's
-  `projectedVolumeTemplate`, and point Trino's `http-server.authentication.jwt.key-file`
-  at the cluster's JWKS URL. The token is rotated by the kubelet.
-* **IdP client credentials.** A sidecar or CronJob refreshes a token file from
-  Keycloak, Entra or Okta. The wrapper picks up the new file automatically.
+* **Platform workload identity.** If your platform can mount a short-lived
+  signed token for the database host (a Kubernetes service account token, a
+  cloud instance identity token), point Trino's
+  `http-server.authentication.jwt.key-file` at that issuer's JWKS URL. The
+  platform rotates the token; the wrapper reads the file on each connection.
+* **IdP client credentials.** A sidecar or scheduled job refreshes a token
+  file from Keycloak, Entra or Okta. The wrapper picks up the new file
+  automatically.
 
 ## Client certificate (mTLS)
 
 ```sql
-OPTIONS (auth 'certificate', cert_file '/projected/trino/tls.crt', key_file '/projected/trino/tls.key')
+OPTIONS (auth 'certificate', cert_file '/etc/trino_fdw/tls.crt', key_file '/etc/trino_fdw/tls.key')
 ```
 
-Issue the certificate with cert-manager and project it into the pod. The
+Issue the certificate from your PKI and mount it on the database host. The
 certificate subject is the Trino principal.
 
 ## Kerberos
@@ -55,9 +57,10 @@ certificate subject is the Trino principal.
 OPTIONS (auth 'kerberos', kerberos_service_name 'trino', kerberos_principal 'svc_fdw@EXAMPLE.COM')
 ```
 
-Build the image with `WITH_KERBEROS=1`. Provide a keytab through the
-`KRB5_CLIENT_KTNAME` environment variable on the cluster pods and a
-`krb5.conf` via `kerberos_config` or `KRB5_CONFIG`.
+Install the `trino_fdw[kerberos]` extra (or build the image with
+`WITH_KERBEROS=1`). Provide a keytab through the `KRB5_CLIENT_KTNAME`
+environment variable of the PostgreSQL server process and a `krb5.conf` via
+`kerberos_config` or `KRB5_CONFIG`.
 
 ## Impersonation (one-to-one identity)
 
@@ -75,7 +78,7 @@ as the principal itself.
 
 ## Hardening checklist
 
-* Project secrets with `defaultMode: 0400` and set `strict_file_permissions 'true'`.
+* Mount secret files with mode 0400 and set `strict_file_permissions 'true'`.
 * Pin the Trino CA with `ca_file`; never disable verification.
 * The connecting PostgreSQL role is not a superuser; grant only `USAGE` on the
   server and `SELECT` on the foreign tables.
